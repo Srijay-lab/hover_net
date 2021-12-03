@@ -91,7 +91,7 @@ def __proc_np_hv(pred):
 
 
 ####
-def process(pred_map, nr_types=None, return_centroids=False):
+def process(pred_map, type_colour, nr_types=None, return_centroids=False):
     """Post processing script for image tiles.
 
     Args:
@@ -106,6 +106,7 @@ def process(pred_map, nr_types=None, return_centroids=False):
         pred_type_out: pixel-wise nuclear type prediction 
 
     """
+
     if nr_types is not None:
         pred_type = pred_map[..., :1]
         pred_inst = pred_map[..., 1:]
@@ -115,6 +116,9 @@ def process(pred_map, nr_types=None, return_centroids=False):
 
     pred_inst = np.squeeze(pred_inst)
     pred_inst = __proc_np_hv(pred_inst)
+
+    size = pred_inst.shape[0]
+    color_segmentation_mask = np.full((size, size, 3), 255)
 
     inst_info_dict = None
     if return_centroids or nr_types is not None:
@@ -179,8 +183,13 @@ def process(pred_map, nr_types=None, return_centroids=False):
             type_prob = type_dict[inst_type] / (np.sum(inst_map_crop) + 1.0e-6)
             inst_info_dict[inst_id]["type"] = int(inst_type)
             inst_info_dict[inst_id]["type_prob"] = float(type_prob)
-
+            inst_colour = list(type_colour[int(inst_type)][1])
+            # print(type(inst_colour))#.astype(np.uint8))
+            # print(type(inst_colour[0]))#.astype(np.uint8))
+            # exit(0)
+            color_segmentation_mask[pred_inst==inst_id] = inst_colour#.astype(np.uint8)
     # print('here')
     # ! WARNING: ID MAY NOT BE CONTIGUOUS
     # inst_id in the dict maps to the same value in the `pred_inst`
-    return pred_inst, inst_info_dict
+    color_segmentation_mask = color_segmentation_mask.astype(np.uint8)
+    return pred_inst, color_segmentation_mask, inst_info_dict

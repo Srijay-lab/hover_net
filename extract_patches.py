@@ -34,12 +34,12 @@ if __name__ == "__main__":
     # a dictionary to specify where the dataset path should be
     dataset_info = {
         "train": {
-            "img": (".png", "dataset/CoNSeP/Train/Images/"),
-            "ann": (".mat", "dataset/CoNSeP/Train/Labels/"),
+            "img": (".png", "F:/Datasets/CoNSeP/Train/Images/"),
+            "ann": (".mat", "F:/Datasets/CoNSeP/Train/Labels/"),
         },
         "valid": {
-            "img": (".png", "dataset/CoNSeP/Test/Images/"),
-            "ann": (".mat", "dataset/CoNSeP/Test/Labels/"),
+            "img": (".png", "F:/Datasets/CoNSeP/Train/Images/"),
+            "ann": (".mat", "F:/Datasets/CoNSeP/Train/Labels/"),
         },
     }
 

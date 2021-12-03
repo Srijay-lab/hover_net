@@ -134,13 +134,22 @@ def _post_process_patches(
     # * a prediction map with instance of ID 1-N
     # * and a dict contain the instance info, access via its ID
     # * each instance may have type
-    pred_inst, inst_info_dict = post_proc_func(pred_map, **post_proc_kwargs)
+
+    pred_inst, pred_color_segmentation, inst_info_dict = post_proc_func(pred_map, overlay_kwargs['type_colour'], **post_proc_kwargs)
 
     overlaid_img = visualize_instances_dict(
         src_image.copy(), inst_info_dict, **overlay_kwargs
     )
 
-    return image_info["name"], pred_map, pred_inst, inst_info_dict, overlaid_img
+    # print(overlaid_img)
+    # print(overlaid_img.shape)
+    # print(type(overlaid_img))
+    # print(type(overlaid_img[0]))
+    # print(type(overlaid_img[0][0]))
+    # print(type(overlaid_img[0][0]))
+    # print(type(overlaid_img[0][0][0]))
+    # exit(0)
+    return image_info["name"], pred_map, pred_inst, pred_color_segmentation, inst_info_dict, overlaid_img
 
 
 class InferManager(base.InferManager):
@@ -164,6 +173,8 @@ class InferManager(base.InferManager):
         rm_n_mkdir(self.output_dir + '/json/')
         rm_n_mkdir(self.output_dir + '/mat/')
         rm_n_mkdir(self.output_dir + '/overlay/')
+        rm_n_mkdir(self.output_dir + '/segmentation/')
+        rm_n_mkdir(self.output_dir + '/color_segmentation/')
         if self.save_qupath:
             rm_n_mkdir(self.output_dir + "/qupath/")
 
@@ -173,7 +184,7 @@ class InferManager(base.InferManager):
             Output format is implicit assumption, taken from `_post_process_patches`
 
             """
-            img_name, pred_map, pred_inst, inst_info_dict, overlaid_img = results
+            img_name, pred_map, pred_inst, pred_color_segmentation, inst_info_dict, overlaid_img = results
 
             nuc_val_list = list(inst_info_dict.values())
             # need singleton to make matlab happy
@@ -188,7 +199,8 @@ class InferManager(base.InferManager):
                 "inst_centroid": nuc_coms_list
             }
             if self.nr_types is None: # matlab does not have None type array
-                mat_dict.pop("inst_type", None) 
+                mat_dict.pop("inst_type", None)
+
 
             if self.save_raw_map:
                 mat_dict["raw_map"] = pred_map
@@ -197,6 +209,32 @@ class InferManager(base.InferManager):
 
             save_path = "%s/overlay/%s.png" % (self.output_dir, img_name)
             cv2.imwrite(save_path, cv2.cvtColor(overlaid_img, cv2.COLOR_RGB2BGR))
+
+            #create binary segmentation output
+            segmentation_mask_img = pred_inst
+            segmentation_mask_img[segmentation_mask_img > 0] = 255
+            save_path = "%s/segmentation/%s.png" % (self.output_dir, img_name)
+            cv2.imwrite(save_path, segmentation_mask_img)
+
+            if self.nr_types is not None:
+                save_path = "%s/color_segmentation/%s.png" % (self.output_dir, img_name)
+                # print(pred_color_segmentation)
+                # print(pred_color_segmentation.shape)
+                # print(type(pred_color_segmentation))
+                # print(type(pred_color_segmentation[0]))
+                # print(type(pred_color_segmentation[0][0]))
+                # print(type(pred_color_segmentation[0][0]))
+                # print(type(pred_color_segmentation[0][0][0]))
+                # exit(0)
+                cv2.imwrite(save_path, cv2.cvtColor(pred_color_segmentation, cv2.COLOR_RGB2BGR))
+
+            # print(self.nr_types)
+            # print(img_name)
+            # print(pred_inst.shape)
+            # print(pred_map.shape)
+            # print(segmentation_mask_img.shape)
+            # print(np.unique(segmentation_mask_img))
+            # exit(0)
 
             if self.save_qupath:
                 nuc_val_list = list(inst_info_dict.values())
@@ -255,6 +293,8 @@ class InferManager(base.InferManager):
                 file_path = file_path_list.pop(0)
 
                 img = cv2.imread(file_path)
+                if("desktop.ini" in file_path):
+                    continue
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                 src_shape = img.shape
 

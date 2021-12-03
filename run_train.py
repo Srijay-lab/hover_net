@@ -273,6 +273,7 @@ class TrainManager(Config):
     ####
     def run(self):
         """Define multi-stage run or cross-validation or whatever in here."""
+
         self.nr_gpus = torch.cuda.device_count()
         print('Detect #GPUS: %d' % self.nr_gpus)
 
